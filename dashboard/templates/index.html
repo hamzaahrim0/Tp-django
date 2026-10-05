@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iris Dashboard</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    h1 { margin-bottom: .2rem; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    form { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem 1rem; }
+    label { display: flex; flex-direction: column; font-size: .9rem; }
+    input { padding: .4rem; font-size: 1rem; }
+    button { grid-column: 1 / -1; padding: .6rem; font-size: 1rem; cursor: pointer; }
+    .result { background: #e7f6ec; border-color: #9bd3ae; font-size: 1.2rem; }
+    .error { background: #fdecea; border-color: #f1a9a0; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #eee; }
+  </style>
+</head>
+<body>
+  <h1>Iris species predictor</h1>
+  <p>Enter the four measurements (in cm) and the model guesses the species.</p>
+
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      <label>Sepal length <input type="number" name="sepal_length" step="any" min="0" max="20" placeholder="5.1" required></label>
+      <label>Sepal width  <input type="number" name="sepal_width"  step="any" min="0" max="20" placeholder="3.5" required></label>
+      <label>Petal length <input type="number" name="petal_length" step="any" min="0" max="20" placeholder="1.4" required></label>
+      <label>Petal width  <input type="number" name="petal_width"  step="any" min="0" max="20" placeholder="0.2" required></label>
+      <button type="submit">Predict</button>
+    </form>
+  </div>
+
+  {% if result %}
+    <div class="card result">Prediction: <strong>{{ result }}</strong></div>
+  {% endif %}
+
+  {% if error %}
+    <div class="card error">{{ error }}</div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Predictions per species</h2>
+    <canvas id="chart" height="120"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Last predictions</h2>
+    <table>
+      <thead>
+        <tr><th>When</th><th>Sepal (L / W)</th><th>Petal (L / W)</th><th>Result</th></tr>
+      </thead>
+      <tbody>
+        {% for p in history %}
+          <tr>
+            <td>{{ p.created_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ p.sepal_length }} / {{ p.sepal_width }}</td>
+            <td>{{ p.petal_length }} / {{ p.petal_width }}</td>
+            <td>{{ p.label }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4">No predictions yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {{ chart|json_script:"chart-data" }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const data = JSON.parse(document.getElementById("chart-data").textContent);
+    new Chart(document.getElementById("chart"), {
+      type: "bar",
+      data: { labels: data.labels, datasets: [{ label: "Predictions", data: data.values }] },
+      options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+  </script>
+</body>
+</html>

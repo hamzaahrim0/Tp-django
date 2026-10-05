@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local data and secrets
+db.sqlite3
+.env
+
+# Generated files (rebuilt by collectstatic / train())
+staticfiles/
+dashboard/model.joblib
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
